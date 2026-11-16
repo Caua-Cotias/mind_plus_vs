@@ -1,8 +1,8 @@
 # MIND + — Arquitetura do catálogo
 
-**Estado:** contratos Zod, modelos Prisma, SQL preliminar e migration oficial do catálogo foram preparados localmente. A migration `20261116191648_add_catalog` ainda não foi aplicada a nenhum banco. API de catálogo e telas continuam fora do escopo.
+**Estado (Etapa 11):** migration `20261116191648_add_catalog` aplicada somente em Neon `development`. As duas migrations estão aplicadas, não há migrations pendentes nem drift Prisma conhecido, e as sete constraints `CHECK` foram confirmadas no PostgreSQL. A API pública de leitura do catálogo está implementada; telas mobile e administração continuam fora do escopo.
 
-Este documento combina requisitos presentes em `CLAUDE.md` e no PDF de especificação do produto com decisões aprovadas posteriormente. Ele é uma proposta técnica para a próxima etapa de persistência e leitura do catálogo; não autoriza mudanças no banco.
+Este documento combina requisitos presentes em `CLAUDE.md` e no PDF de especificação do produto com decisões aprovadas posteriormente. Registra o modelo de dados aplicado em Neon `development` e as regras de leitura pública implementadas. Mudanças futuras no schema continuam dependendo de revisão e autorização próprias.
 
 ## 1. Base arquitetural e escopo
 
@@ -10,7 +10,7 @@ O monorepo contém `apps/mobile` (Expo Router), `apps/admin` (Next.js), `apps/ap
 
 A especificação do produto descreve uma experiência mobile de séries episódicas curtas, com home, destaque, listagem, categorias, busca, temporadas e episódios. Também cita popularidade, continuar assistindo, banners, assinaturas e player, mas essas capacidades dependem de decisões, modelos ou infraestrutura posteriores e não fazem parte do catálogo inicial.
 
-O schema local inclui os modelos Prisma do catálogo. O [SQL preliminar de revisão](catalog-schema-review.sql) permanece como artefato comparativo; a migration oficial correspondente está em `packages/database/prisma/migrations/20261116191648_add_catalog/migration.sql`. Ela foi gerada offline comparando arquivos de schema locais e incorporou as sete constraints `CHECK` manuais. A migration ainda não foi aplicada. Não cria endpoints, dados demonstrativos ou telas.
+O schema local inclui os modelos Prisma do catálogo. O [SQL preliminar de revisão](catalog-schema-review.sql) permanece como artefato comparativo; a migration oficial correspondente está em `packages/database/prisma/migrations/20261116191648_add_catalog/migration.sql`. Ela foi gerada offline comparando arquivos de schema locais e incorporou as sete constraints `CHECK` manuais. Em 16/11/2026, a migration foi aplicada em Neon `development`; a migration Better Auth e a migration do catálogo estão aplicadas, sem pendências, e tabelas, enums, índices, FKs e CHECKs foram conferidos. Nenhuma alteração foi feita em `production`.
 
 ## 2. Requisitos e decisões aprovadas
 
@@ -39,7 +39,7 @@ O schema local inclui os modelos Prisma do catálogo. O [SQL preliminar de revis
 13. Imagens, vídeos e suas referências são opcionais. O schema não exige nem seleciona provedor de storage externo.
 14. Exclusões relacionadas são restritas por FK; arquivamento é o caminho editorial preferido.
 
-## 3. Proposta de modelo Prisma — somente para revisão
+## 3. Modelo Prisma aplicado
 
 O schema local foi refinado nesta Etapa 10C. As novas datas do catálogo usam `@db.Timestamptz(3)` para representar instantes com timezone e precisão de milissegundos; os quatro modelos Better Auth mantêm seus tipos originais. O SQL em `docs/catalog-schema-review.sql` contém o diff entre schemas locais e as restrições `CHECK` propostas manualmente porque Prisma 7.10.1 não as representa no schema. Limites de texto alinham-se aos contratos Zod existentes. IDs dos modelos de catálogo usam `@default(uuid())`: Prisma Client gera UUID v4 ao criar cada registro; o PostgreSQL não tem default para esses campos. `SeriesCategory` usa a chave primária composta `(seriesId, categoryId)`. Inserts SQL fora do Prisma precisam fornecer IDs explícitos.
 
@@ -251,13 +251,19 @@ Popularidade, progresso, assinatura, agendamento e player foram adiados, não s�
 
 ## 9. Sequência recomendada
 
-1. Revisar o schema local, o SQL preliminar em `docs/catalog-schema-review.sql` e a migration oficial, incluindo as sete constraints `CHECK` manuais.
-2. Em etapa separada, confirmar que a conexão aponta para Neon `development` e obter autorização explícita antes de aplicar a migration; nunca usar `production` nesta fase.
-3. Implementar serviços de leitura na API, com testes de visibilidade, publicação e prevenção de vazamento.
-4. Implementar Route Handlers públicos que validam e respondem pelos contracts.
-5. Construir navegação pública do catálogo no Expo, com estados reais e sem player.
-6. Planejar administração/editorial, storage/assets e funções adiadas em etapas independentes.
+1. O schema, SQL e migration do catálogo foram revisados; a migration foi aplicada e verificada em Neon `development`.
+2. Serviços de leitura e Route Handlers públicos foram implementados nesta Etapa 11, com validação de contratos, filtros de visibilidade e testes em memória.
+3. Construir navegação pública do catálogo no Expo, apresentando estados vazios enquanto não houver conteúdo publicado.
+4. Planejar administração/editorial, storage/assets e funções adiadas em etapas independentes.
 
 ## 10. Fora do escopo atual
 
-Esta etapa criou localmente a migration oficial `20261116191648_add_catalog` e atualizou este documento e o README do pacote database. Nenhum banco foi acessado ou alterado. Autenticação, Resend, `neon.ts`, API, admin e mobile não foram modificados. Não implementa upload, processamento, player, progresso, assinatura ou pagamentos.
+Na Etapa 10D a migration oficial foi criada localmente e, na Etapa 10E, aplicada somente em Neon `development`. Na Etapa 11 foram implementadas as rotas públicas de leitura listadas abaixo; não há operações de escrita nem dados demonstrativos. O catálogo não resolve URLs de mídia: imagens retornam `null` até existir um mecanismo seguro de resolução pública. Autenticação, Resend, `neon.ts`, admin e mobile não foram alterados. Upload, processamento, player, progresso, assinatura e pagamentos continuam fora do escopo.
+
+Rotas públicas implementadas:
+
+- `GET /api/catalog/categories`
+- `GET /api/catalog/series`
+- `GET /api/catalog/series/[slug]`
+- `GET /api/catalog/series/[slug]/seasons`
+- `GET /api/catalog/series/[slug]/seasons/[seasonNumber]/episodes`

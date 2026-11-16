@@ -23,7 +23,7 @@ npm run lint --workspace @mind-plus/database
 npm run build --workspace @mind-plus/database
 ```
 
-`dev` observa alterações no schema e regenera o Client. O pacote não aplica migrations automaticamente. A migration inicial de Better Auth está versionada em `prisma/migrations/20261115211836_add_better_auth/` e aplicada somente na branch Neon `development`.
+`dev` observa alterações no schema e regenera o Client. O pacote não aplica migrations automaticamente. As migrations `20261115211836_add_better_auth` e `20261116191648_add_catalog` estão aplicadas somente na branch Neon `development`; não há migrations pendentes. A branch `production` não foi alterada.
 
 ## Importação
 
@@ -35,9 +35,9 @@ O pacote mantém uma instância global em desenvolvimento para evitar clientes d
 
 ## Schema e migrations
 
-O schema local contém os modelos técnicos de autenticação `User`, `Session`, `Account` e `Verification`, além dos modelos de catálogo `Series`, `Season`, `Episode`, `Category`, `SeriesCategory` e `MediaAsset`. Datas de catálogo usam `Timestamptz(3)`; IDs dos modelos de catálogo são UUID v4 gerados pelo Prisma Client. A migration inicial de Better Auth cria somente `user`, `session`, `account` e `verification`. A migration oficial local do catálogo está em `prisma/migrations/20261116191648_add_catalog/migration.sql`; ela ainda não foi aplicada a nenhum banco.
+O schema local contém os modelos técnicos de autenticação `User`, `Session`, `Account` e `Verification`, além dos modelos de catálogo `Series`, `Season`, `Episode`, `Category`, `SeriesCategory` e `MediaAsset`. Datas de catálogo usam `Timestamptz(3)`; IDs dos modelos de catálogo são UUID v4 gerados pelo Prisma Client. A migration Better Auth cria somente `user`, `session`, `account` e `verification`. A migration do catálogo está em `prisma/migrations/20261116191648_add_catalog/migration.sql`. As duas migrations foram aplicadas em Neon `development` e verificadas como aplicadas, sem migration pendente.
 
-O SQL preliminar de criação do catálogo fica em `docs/catalog-schema-review.sql`, fora de `prisma/migrations`, para referência de revisão. A migration oficial foi gerada por comparação entre arquivos de schema locais, sem conexão com PostgreSQL ou Neon, e inclui explicitamente as sete constraints `CHECK` manuais. Prisma 7.10.1 não representa essas constraints no `schema.prisma`; elas precisam ser preservadas no SQL versionado e consideradas em revisões futuras de drift. A migration foi criada localmente, não foi aplicada e não alterou tabelas ou dados.
+O SQL preliminar de criação do catálogo fica em `docs/catalog-schema-review.sql`, fora de `prisma/migrations`, como artefato de revisão. A migration oficial foi gerada por comparação entre arquivos de schema locais e inclui explicitamente as sete constraints `CHECK` manuais. Prisma 7.10.1 não representa essas constraints no `schema.prisma`; elas precisam ser preservadas no SQL versionado e consideradas em revisões futuras de drift. Em 16/11/2026, a estrutura foi conferida em Neon `development`: seis tabelas de catálogo, quatro enums, quinze índices explícitos, oito FKs com `ON DELETE RESTRICT` e as sete CHECKs. O diff Prisma não identificou diferenças nas estruturas representadas pelo schema. Não foi acessada nem alterada a branch `production`.
 
 As regras de integridade cobertas pelos `CHECK` devem também ser validadas nos serviços. A compatibilidade entre `MediaAsset.kind`, `processingStatus` e o tipo de referência é uma regra entre registros e continuará sob responsabilidade da camada de domínio; não foi criada trigger.
 
