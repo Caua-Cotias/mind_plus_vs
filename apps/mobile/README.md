@@ -27,13 +27,28 @@ EXPO_PUBLIC_API_URL=http://192.168.1.20:3000
 
 Substitua o IP pelo endereço LAN do computador que executa a API. Computador e dispositivo devem estar na mesma rede, e o firewall do Windows deve permitir conexões locais à porta 3000. Reinicie o Expo depois de alterar a variável.
 
-## Fluxos disponíveis
+## Catálogo público e conta
 
-- Boas-vindas e login por e-mail e senha.
-- A sessão é restaurada pelo Better Auth antes de liberar as rotas públicas ou autenticadas.
-- Rotas públicas e autenticadas são protegidas com Expo Router.
-- A tela autenticada mostra apenas o nome/e-mail da conta e permite sair.
-- Novos cadastros estão temporariamente indisponíveis; a rota direta apresenta uma mensagem e volta ao login.
+- A rota inicial `/` consulta `GET /api/catalog/categories` e `GET /api/catalog/series` sem exigir sessão Better Auth.
+- A rota `/series` permite buscar pelo título, filtrar por categoria e paginar os resultados com os metadados recebidos da API.
+- A rota `/series/[slug]` consulta os detalhes e as temporadas públicas em `GET /api/catalog/series/{slug}` e `GET /api/catalog/series/{slug}/seasons`.
+- A rota `/series/[slug]/seasons/[seasonNumber]` consulta episódios publicados em `GET /api/catalog/series/{slug}/seasons/{seasonNumber}/episodes`, preservando a ordem enviada pela API e a paginação.
+- As rotas de detalhes e temporadas são públicas e ficam fora do grupo autenticado. Cards de série e temporada abrem esses caminhos; voltar retorna à tela anterior e preserva os filtros da listagem.
+- Categorias e séries são apresentadas somente quando a API as retorna. Sem capas cadastradas, a interface mostra um marcador de imagem indisponível; não cria pôsteres, títulos, avaliações ou métricas de exemplo.
+- Detalhes mostram sinopse, descrição complementar expansível, categorias, classificação etária quando informada e temporadas. Imagens usam somente URLs HTTP/HTTPS públicas; URLs inválidas ou falhas de carregamento recebem placeholder.
+- Episódios mostram miniatura pública quando disponível, título, descrição, duração e nível `FREE` ou `PREMIUM`. O rótulo premium é informativo: não existe player, compra, assinatura ou desbloqueio no aplicativo.
+- Loading, falha de conexão, resposta inválida, retry e catálogo vazio têm estados separados.
+- O catálogo envia requisições públicas sem cookies de sessão. A autenticação usa seu cliente Better Auth e SecureStore existentes.
+- A rota autenticada `/home` restaura e verifica a sessão ao entrar na área da conta. A Home pública não espera por essa requisição e continua acessível se a sessão não puder ser confirmada.
+- A área autenticada mantém exibição básica da conta e logout. `/login` continua disponível; novos cadastros estão temporariamente indisponíveis.
+
+## Design system e componentes
+
+Os tokens centralizados estão em `src/constants/theme.ts`: cores cinematográficas escuras, violeta e ciano, tipografia, espaçamento, arredondamentos, interação, loading e erro. O app usa UniWind 1.x com Tailwind CSS 4 para o piloto de estilos utilitários, o botão local baseado no core copy-paste do gluestack-ui v5 e `expo-linear-gradient` para a transição da imagem de destaque. Outros layouts permanecem com `StyleSheet` do React Native; a integração ainda não reformula as telas de autenticação.
+
+O CLI do gluestack não é usado no Windows: a documentação atual recomenda configuração manual nesse ambiente. A integração UniWind foi limitada a `apps/mobile`; não deve ser importada pelo admin Next.js.
+
+Componentes iniciais: `SeriesCard`, `FeaturedSeriesCard`, `CategoryChip`, `SectionHeader`, `EmptyState`, `ErrorState`, `LoadingSkeleton` e `PremiumBadge`.
 
 ## Verificação de e-mail
 
@@ -51,10 +66,24 @@ O app não marca contas como verificadas localmente e o login continua sujeito �
 npm test
 npm run lint --workspace @mind-plus/mobile
 npm run typecheck --workspace @mind-plus/mobile
+npx expo export --platform android
+npx expo export --platform ios
 ```
 
-Os testes do mobile validam formulários e fluxos de autenticação através de um gateway simulado. Eles não iniciam o servidor Next.js e não acessam Neon. Testes HTTP com banco real continuam opt-in, usam somente Neon `development` e exigem autorização explícita separada.
+Os testes do mobile incluem fluxos de autenticação, cliente HTTP do catálogo com fetch simulado, schemas de detalhe/temporada/episódio, respostas 404, rejeição de campos internos, rotas públicas sem dependência de Better Auth e renderização das telas/componentes no preset de teste do Expo. Eles não iniciam o servidor Next.js e não acessam Neon. Testes HTTP com banco real continuam opt-in, usam somente Neon `development` e exigem autorização explícita separada.
+
+As exportações Android/iOS verificam o bundle do Expo para as plataformas; não substituem uma execução visual em aparelho. Não havia emulador ou dispositivo conectado ao ambiente Codex durante a validação.
+
+## Testar em celular com Expo Go
+
+1. Configure `EXPO_PUBLIC_API_URL` em `apps/mobile/.env.local` com o endereço LAN do computador, por exemplo `http://192.168.1.20:3000`. A variável contém somente a URL pública da API, nunca credenciais.
+2. No primeiro terminal, na raiz do monorepo, execute `npm run dev:api`.
+3. No segundo terminal, execute `npm run dev:mobile` e escaneie o QR Code com Expo Go. Mantenha celular e computador na mesma rede Wi-Fi e permita a porta 3000 no firewall local.
+4. A Home deve abrir o catálogo sem login. Com séries publicadas, abra um card para conferir detalhes e temporadas; escolha uma temporada para ver episódios e rótulos de acesso. Sem conteúdo publicado, as telas exibem estados vazios reais. Teste busca e erros de rede/retry desligando temporariamente a API local, se necessário.
+5. “Acessar conta” leva à área protegida. O login continua limitado a contas previamente verificadas; o catálogo público não altera a sessão existente.
+
+Depois de alterar `.env.local`, reinicie o servidor Expo para carregar a URL nova.
 
 ## Próximas etapas
 
-Antes de conectar o painel administrativo, defina os fluxos de e-mail, política de sessão web/cookies e autorização de administradores no backend. O admin deverá consumir somente a API central; não deve acessar Prisma ou Neon diretamente.
+Etapa 12B pode implementar os detalhes públicos de série, temporadas e lista de episódios usando as rotas existentes, sem player ou reprodução. Antes de conectar o painel administrativo, defina os fluxos de e-mail, política de sessão web/cookies e autorização de administradores no backend. O admin deverá consumir somente a API central; não deve acessar Prisma ou Neon diretamente.

@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { Text, View } from "react-native";
+import { useState } from 'react';
+import { Link } from 'expo-router';
+import { Text, View } from 'react-native';
 
-import { AuthScreen, InlineMessage, PrimaryButton } from "@/components/auth-ui";
-import { Colors, Spacing } from "@/constants/theme";
-import { authFlow, authClient } from "@/lib/auth-client";
+import { AuthScreen, InlineMessage, PrimaryButton } from '@/components/auth-ui';
+import { Colors, Radii, Spacing } from '@/constants/theme';
+import { authFlow, authClient } from '@/lib/auth-client';
 
 const palette = Colors.dark;
 
@@ -26,11 +27,14 @@ export default function AuthenticatedHomeScreen() {
   }
 
   return (
-    <AuthScreen title={`Olá, ${user?.name?.trim() || "bem-vindo"}`} description="Sua sessão está ativa e protegida neste dispositivo.">
-      <View style={{ backgroundColor: palette.backgroundElement, borderColor: palette.border, borderWidth: 1, borderRadius: 16, padding: Spacing.three, gap: Spacing.two }}>
+    <AuthScreen title={`Olá, ${user?.name?.trim() || 'bem-vindo'}`} description="Sua sessão está ativa e protegida neste dispositivo.">
+      <View style={{ backgroundColor: palette.backgroundElement, borderColor: palette.border, borderWidth: 1, borderRadius: Radii.large, padding: Spacing.four, gap: Spacing.two }}>
         <Text style={{ color: palette.textSecondary, fontSize: 12, fontWeight: "700", letterSpacing: 1 }}>CONTA</Text>
         <Text selectable style={{ color: palette.text, fontSize: 16 }}>{user?.email ?? ""}</Text>
       </View>
+      <Link href="/" style={{ color: palette.accent, textAlign: 'center', padding: Spacing.three, fontWeight: '700' }}>
+        Explorar catálogo público
+      </Link>
       {error ? <InlineMessage>{error}</InlineMessage> : null}
       <PrimaryButton title="Sair da conta" onPress={() => void handleLogout()} loading={loading} />
     </AuthScreen>

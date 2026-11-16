@@ -30,6 +30,10 @@ O comando `npm run dev:api` compila contratos e database antes de iniciar a API.
 
 Better Auth atende em `http://localhost:3000/api/auth`. O login, logout e restauração de sessão permanecem operacionais para contas já verificadas; novos cadastros estão temporariamente suspensos (`disableSignUp: true`). A verificação continua obrigatória. E-mails transacionais estão arquivados: a configuração normal da API não carrega Resend nem exige credenciais, e as rotas de reenvio e recuperação/reset de senha retornam HTTP 410. O módulo Resend é preservado para retomada após configurar domínio e remetente e validar o fluxo completo. Veja [`docs/authentication.md`](docs/authentication.md) para detalhes de sessão, SecureStore e limitações.
 
+## Catálogo mobile
+
+A Home pública do mobile consulta as rotas públicas de categorias e séries da API e não exige sessão. `/series` oferece busca por título e filtro por categoria; `/series/[slug]` apresenta detalhes e temporadas publicadas; `/series/[slug]/seasons/[seasonNumber]` lista episódios publicados. A rota autenticada `/home` mantém a verificação de sessão Better Auth. Todas as telas usam dados da API, mostram estados de erro e ausência de conteúdo e não implementam reprodução ou desbloqueio premium. O catálogo atual pode estar vazio. A configuração visual e o roteiro de teste em Expo Go estão descritos em [`apps/mobile/README.md`](apps/mobile/README.md).
+
 ## Desenvolvimento
 
 Instale as dependências a partir da raiz:

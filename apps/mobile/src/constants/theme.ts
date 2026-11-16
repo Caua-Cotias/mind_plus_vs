@@ -1,34 +1,43 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://unistyl.es/), etc.
- */
-
-import '@/global.css';
-
 import { Platform } from 'react-native';
+
+export const ColorTokens = {
+  background: '#080B14',
+  surface: '#111827',
+  surfaceRaised: '#182235',
+  surfaceSelected: '#202D43',
+  primary: '#7567F8',
+  primaryPressed: '#6557E8',
+  secondary: '#70D6FF',
+  textPrimary: '#F5F7FF',
+  textSecondary: '#A7B0C2',
+  border: '#2B3548',
+  danger: '#FF7B86',
+  dangerSurface: '#2A151C',
+  success: '#73D6A4',
+} as const;
 
 export const Colors = {
   light: {
-    text: '#F5F7FF',
-    background: '#080B14',
-    backgroundElement: '#111827',
-    backgroundSelected: '#1B2638',
-    textSecondary: '#9AA8BE',
-    accent: '#70D6FF',
-    primary: '#635BFF',
-    border: '#273247',
-    danger: '#FF7B86',
+    text: ColorTokens.textPrimary,
+    background: ColorTokens.background,
+    backgroundElement: ColorTokens.surface,
+    backgroundSelected: ColorTokens.surfaceSelected,
+    textSecondary: ColorTokens.textSecondary,
+    accent: ColorTokens.secondary,
+    primary: ColorTokens.primary,
+    border: ColorTokens.border,
+    danger: ColorTokens.danger,
   },
   dark: {
-    text: '#F5F7FF',
-    background: '#080B14',
-    backgroundElement: '#111827',
-    backgroundSelected: '#1B2638',
-    textSecondary: '#9AA8BE',
-    accent: '#70D6FF',
-    primary: '#635BFF',
-    border: '#273247',
-    danger: '#FF7B86',
+    text: ColorTokens.textPrimary,
+    background: ColorTokens.background,
+    backgroundElement: ColorTokens.surface,
+    backgroundSelected: ColorTokens.surfaceSelected,
+    textSecondary: ColorTokens.textSecondary,
+    accent: ColorTokens.secondary,
+    primary: ColorTokens.primary,
+    border: ColorTokens.border,
+    danger: ColorTokens.danger,
   },
 } as const;
 
@@ -63,10 +72,43 @@ export const Spacing = {
   half: 2,
   one: 4,
   two: 8,
-  three: 16,
-  four: 24,
-  five: 32,
-  six: 64,
+  three: 12,
+  four: 16,
+  five: 24,
+  six: 32,
+  seven: 48,
+  eight: 64,
+} as const;
+
+export const Typography = {
+  caption: 12,
+  bodySmall: 14,
+  body: 16,
+  titleSmall: 20,
+  title: 28,
+  display: 36,
+} as const;
+
+export const Radii = {
+  small: 8,
+  medium: 14,
+  large: 20,
+  extraLarge: 28,
+  pill: 999,
+} as const;
+
+export const Interaction = {
+  pressedOpacity: 0.78,
+  disabledOpacity: 0.48,
+  minimumTargetSize: 44,
+  transitionDuration: 180,
+} as const;
+
+export const Feedback = {
+  loading: ColorTokens.secondary,
+  errorText: ColorTokens.danger,
+  errorSurface: ColorTokens.dangerSurface,
+  skeleton: ColorTokens.surfaceRaised,
 } as const;
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
