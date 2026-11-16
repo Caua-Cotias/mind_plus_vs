@@ -1,0 +1,209 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+  runtime      = "nodejs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum PublicationStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+
+  @@map("publication_status")
+}
+
+enum AccessLevel {
+  FREE
+  PREMIUM
+
+  @@map("access_level")
+}
+
+enum MediaAssetKind {
+  IMAGE
+  VIDEO
+
+  @@map("media_asset_kind")
+}
+
+enum MediaAssetProcessingStatus {
+  PENDING
+  READY
+  FAILED
+
+  @@map("media_asset_processing_status")
+}
+
+model User {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+model Series {
+  id                String            @id @default(uuid()) @db.VarChar(128)
+  slug              String            @unique @db.VarChar(120)
+  title             String            @db.VarChar(180)
+  synopsis          String            @db.VarChar(5000)
+  description       String?           @db.VarChar(5000)
+  ageRating         String?           @db.VarChar(32)
+  publicationStatus PublicationStatus @default(DRAFT)
+  publishedAt       DateTime?         @db.Timestamptz(3)
+  featuredOrder     Int?
+  posterAssetId     String?           @db.VarChar(128)
+  featuredAssetId   String?           @db.VarChar(128)
+  createdAt         DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime          @updatedAt @db.Timestamptz(3)
+  seasons           Season[]
+  categories        SeriesCategory[]
+  posterAsset       MediaAsset?       @relation("SeriesPoster", fields: [posterAssetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  featuredAsset     MediaAsset?       @relation("SeriesFeaturedImage", fields: [featuredAssetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([publicationStatus, publishedAt(sort: Desc), id(sort: Asc)])
+  @@index([publicationStatus, featuredOrder(sort: Asc), publishedAt(sort: Desc), id(sort: Asc)])
+  @@index([publicationStatus, title(sort: Asc), id(sort: Asc)])
+  @@index([posterAssetId])
+  @@index([featuredAssetId])
+  @@map("series")
+}
+
+model Season {
+  id           String    @id @default(uuid()) @db.VarChar(128)
+  seriesId     String    @db.VarChar(128)
+  seasonNumber Int
+  title        String?   @db.VarChar(160)
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @db.Timestamptz(3)
+  series       Series    @relation(fields: [seriesId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  episodes     Episode[]
+
+  @@unique([seriesId, seasonNumber])
+  @@map("season")
+}
+
+model Episode {
+  id                String            @id @default(uuid()) @db.VarChar(128)
+  seasonId          String            @db.VarChar(128)
+  episodeNumber     Int
+  title             String            @db.VarChar(180)
+  description       String?           @db.VarChar(5000)
+  thumbnailAssetId  String?           @db.VarChar(128)
+  videoAssetId      String?           @db.VarChar(128)
+  durationSeconds   Int?
+  publicationStatus PublicationStatus @default(DRAFT)
+  publishedAt       DateTime?         @db.Timestamptz(3)
+  accessLevel       AccessLevel
+  createdAt         DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime          @updatedAt @db.Timestamptz(3)
+  season            Season            @relation(fields: [seasonId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  thumbnailAsset    MediaAsset?       @relation("EpisodeThumbnail", fields: [thumbnailAssetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  videoAsset        MediaAsset?       @relation("EpisodeVideo", fields: [videoAssetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([seasonId, episodeNumber])
+  @@index([seasonId, publicationStatus, episodeNumber])
+  @@index([seasonId, publicationStatus, accessLevel, episodeNumber])
+  @@index([thumbnailAssetId])
+  @@index([videoAssetId])
+  @@map("episode")
+}
+
+model Category {
+  id        String           @id @default(uuid()) @db.VarChar(128)
+  name      String           @db.VarChar(80)
+  slug      String           @unique @db.VarChar(120)
+  createdAt DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime         @updatedAt @db.Timestamptz(3)
+  series    SeriesCategory[]
+
+  @@map("category")
+}
+
+model SeriesCategory {
+  seriesId   String   @db.VarChar(128)
+  categoryId String   @db.VarChar(128)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  series     Series   @relation(fields: [seriesId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@id([seriesId, categoryId])
+  @@index([categoryId])
+  @@map("series_category")
+}
+
+model MediaAsset {
+  id                String                     @id @default(uuid()) @db.VarChar(128)
+  kind              MediaAssetKind
+  storageKey        String?                    @unique
+  processingStatus  MediaAssetProcessingStatus @default(PENDING)
+  mimeType          String?                    @db.VarChar(127)
+  createdAt         DateTime                   @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime                   @updatedAt @db.Timestamptz(3)
+  posterForSeries   Series[]                   @relation("SeriesPoster")
+  featuredForSeries Series[]                   @relation("SeriesFeaturedImage")
+  thumbnails        Episode[]                  @relation("EpisodeThumbnail")
+  videos            Episode[]                  @relation("EpisodeVideo")
+
+  @@map("media_asset")
+}

@@ -1,0 +1,38 @@
+{
+  "name": "@mind-plus/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "prebuild": "npm run build --workspace @mind-plus/database",
+    "start": "next start --port 3000",
+    "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit",
+    "pretypecheck": "npm run build --workspace @mind-plus/database",
+    "test": "node --test test/*.test.mjs",
+    "test:integration": "node --test test/auth.neon.integration.test.mjs",
+    "test:integration:http": "node --test test/auth.http.neon.integration.test.mjs"
+  },
+  "dependencies": {
+    "@better-auth/expo": "1.7.25",
+    "@better-auth/prisma-adapter": "1.7.25",
+    "@mind-plus/contracts": "*",
+    "@mind-plus/database": "*",
+    "@next/env": "16.4.6",
+    "better-auth": "1.7.25",
+    "next": "16.4.6",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@better-auth/memory-adapter": "1.7.25",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "auth": "1.7.25",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "16.4.6",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,56 +1,60 @@
-# Welcome to your Expo app 👋
+# MIND + mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicativo Expo/React Native para iOS e Android. A autenticação usa a API central do MIND + (Better Auth) e o plugin oficial `@better-auth/expo`, que persiste o cookie de sessão no `expo-secure-store`. Senhas não são persistidas pelo aplicativo.
 
-## Get started
+## Configurar a URL da API
 
-1. Install dependencies
+Inicie a API em outro terminal a partir da raiz do monorepo:
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```powershell
+npm run dev:api
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+O app usa `EXPO_PUBLIC_API_URL` como origem HTTP da API e acrescenta `/api/auth` para o Better Auth. Essa variável é pública e entra no bundle, portanto nunca coloque segredos nela.
 
-### Other setup steps
+Sem variável explícita, os fallbacks de desenvolvimento são:
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+- Emulador Android: `http://10.0.2.2:3000`.
+- Simulador iOS e web local: `http://localhost:3000`.
+- Expo Go em dispositivo físico: host LAN anunciado pelo servidor Expo, porta `3000`.
+- Development build em dispositivo físico: configure a origem LAN explicitamente.
 
-## Learn more
+Para um endereço específico, crie `apps/mobile/.env.local` (arquivo local ignorado pelo Git) com uma linha como:
 
-To learn more about developing your project with Expo, look at the following resources:
+```dotenv
+EXPO_PUBLIC_API_URL=http://192.168.1.20:3000
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Substitua o IP pelo endereço LAN do computador que executa a API. Computador e dispositivo devem estar na mesma rede, e o firewall do Windows deve permitir conexões locais à porta 3000. Reinicie o Expo depois de alterar a variável.
 
-## Join the community
+## Fluxos disponíveis
 
-Join our community of developers creating universal apps.
+- Boas-vindas e login por e-mail e senha.
+- A sessão é restaurada pelo Better Auth antes de liberar as rotas públicas ou autenticadas.
+- Rotas públicas e autenticadas são protegidas com Expo Router.
+- A tela autenticada mostra apenas o nome/e-mail da conta e permite sair.
+- Novos cadastros estão temporariamente indisponíveis; a rota direta apresenta uma mensagem e volta ao login.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Verificação de e-mail
+
+O login de contas existentes continua exigindo verificação obrigatória. Novos cadastros e reenvios estão suspensos; a tela de verificação pendente informa que o e-mail transacional está arquivado e oferece retorno ao login.
+
+O transporte Resend e seu template permanecem preservados no servidor para retomada, mas não são carregados pela configuração normal e nenhum e-mail é enviado. A retomada exige domínio próprio verificado, remetente autorizado, `RESEND_API_KEY` privada e `BETTER_AUTH_URL` HTTPS pública. Nunca exponha essas configurações em variáveis `EXPO_PUBLIC_*`. Se uma chave real foi exposta em captura/conversa, revogue-a e gere uma nova antes de reutilizar o serviço.
+
+Links de verificação válidos já emitidos ainda são tratados por `/verification-complete`; não são gerados novos e-mails durante o arquivamento. Um endereço `localhost` ou IP LAN não é apropriado para links abertos fora da rede. Para retomada do fluxo instalado, configure domínio HTTPS e Android App Links/iOS Universal Links.
+
+O app não marca contas como verificadas localmente e o login continua sujeito à resposta da API. Reenvio e recuperação de senha estão indisponíveis. Os testes usam adapter em memória e transporte simulado; não enviam mensagens nem escrevem no Neon.
+
+## Testes e verificações
+
+```powershell
+npm test
+npm run lint --workspace @mind-plus/mobile
+npm run typecheck --workspace @mind-plus/mobile
+```
+
+Os testes do mobile validam formulários e fluxos de autenticação através de um gateway simulado. Eles não iniciam o servidor Next.js e não acessam Neon. Testes HTTP com banco real continuam opt-in, usam somente Neon `development` e exigem autorização explícita separada.
+
+## Próximas etapas
+
+Antes de conectar o painel administrativo, defina os fluxos de e-mail, política de sessão web/cookies e autorização de administradores no backend. O admin deverá consumir somente a API central; não deve acessar Prisma ou Neon diretamente.

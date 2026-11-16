@@ -1,0 +1,61 @@
+{
+  "name": "@mind-plus/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Schemas Zod e tipos compartilhados do MIND +.",
+  "files": [
+    "build"
+  ],
+  "exports": {
+    ".": {
+      "types": "./build/index.d.ts",
+      "import": "./build/index.js",
+      "default": "./build/index.js"
+    },
+    "./api-response": {
+      "types": "./build/schemas/api-response.d.ts",
+      "import": "./build/schemas/api-response.js",
+      "default": "./build/schemas/api-response.js"
+    },
+    "./api-error": {
+      "types": "./build/schemas/api-error.d.ts",
+      "import": "./build/schemas/api-error.js",
+      "default": "./build/schemas/api-error.js"
+    },
+    "./health-check": {
+      "types": "./build/schemas/health-check.d.ts",
+      "import": "./build/schemas/health-check.js",
+      "default": "./build/schemas/health-check.js"
+    },
+    "./public-user": {
+      "types": "./build/schemas/public-user.d.ts",
+      "import": "./build/schemas/public-user.js",
+      "default": "./build/schemas/public-user.js"
+    },
+    "./pagination": {
+      "types": "./build/schemas/pagination.d.ts",
+      "import": "./build/schemas/pagination.js",
+      "default": "./build/schemas/pagination.js"
+    },
+    "./catalog": {
+      "types": "./build/schemas/catalog.d.ts",
+      "import": "./build/schemas/catalog.js",
+      "default": "./build/schemas/catalog.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "npm run build && node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.5",
+    "typescript-eslint": "^8.72.2",
+    "typescript": "^5.9.3"
+  }
+}
